@@ -1,0 +1,85 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    "docker:enableMajor",
+    ":enablePreCommit",
+    ":semanticCommits"
+  ],
+  "timezone": "Europe/London",
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "labels": ["dependencies"],
+  "assignees": ["@me"],
+  "reviewers": ["@me"],
+  "commitMessagePrefix": "fix:",
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageExtra": "to {{newVersion}}",
+  "prTitle": "fix: update {{depName}} to {{newVersion}}",
+  "separateMajorMinor": true,
+  "separateMinorPatch": false,
+  "dockerfile": {
+    "enabled": true
+  },
+  "docker": {
+    "enabled": true,
+    "major": {
+      "enabled": true,
+      "commitMessagePrefix": "feat!:",
+      "prTitle": "feat!: update {{depName}} to {{newVersion}} (BREAKING)"
+    },
+    "minor": {
+      "enabled": true,
+      "commitMessagePrefix": "feat:",
+      "prTitle": "feat: update {{depName}} to {{newVersion}}"
+    },
+    "patch": {
+      "enabled": true,
+      "commitMessagePrefix": "fix:",
+      "prTitle": "fix: update {{depName}} to {{newVersion}}"
+    }
+  },
+  "pip_requirements": {
+    "enabled": true
+  },
+  "packageRules": [
+    {
+      "description": "Pin base image versions (Python, Alpine)",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["python"],
+      "rangeStrategy": "pin",
+      "allowedVersions": ">=3.10",
+      "matchUpdateTypes": ["major"],
+      "commitMessagePrefix": "feat!:",
+      "addLabels": ["breaking-change"],
+      "automerge": false
+    },
+    {
+      "description": "Auto-update GitHub Actions to latest",
+      "matchDatasources": ["github-actions"],
+      "rangeStrategy": "bump",
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "addLabels": ["auto-merge"]
+    },
+    {
+      "description": "Auto-update Python packages to latest",
+      "matchDatasources": ["pypi"],
+      "rangeStrategy": "bump",
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "addLabels": ["auto-merge"]
+    },
+    {
+      "description": "Manual review for major Python package updates",
+      "matchDatasources": ["pypi"],
+      "matchUpdateTypes": ["major"],
+      "commitMessagePrefix": "feat!:",
+      "addLabels": ["breaking-change"],
+      "automerge": false
+    }
+  ],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 3
+}

@@ -1,0 +1,163 @@
+name: Build, Test, and Release
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: mitene-backup
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Build test image
+      run: docker build -t test-image .
+
+    - name: Test container runs
+      run: |
+        docker run --rm -e MITENE_URL="https://example.com" test-image echo "Container test passed"
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      security-events: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Determine version
+      id: version
+      run: |
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          echo "version=pr-${{ github.event.number }}" >> $GITHUB_OUTPUT
+        else
+          # Get last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Last tag: $LAST_TAG"
+          
+          # Always increment patch version on main branch
+          VERSION=$(echo $LAST_TAG | sed 's/v//')
+          IFS='.' read -r -a VERSION_PARTS <<< "$VERSION"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          
+          # Determine version bump based on commit messages since last tag
+          if git log $LAST_TAG..HEAD --oneline | grep -E "(feat!|BREAKING|breaking)"; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif git log $LAST_TAG..HEAD --oneline | grep -E "(feat|feature)"; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          else
+            PATCH=$((PATCH + 1))
+          fi
+          
+          NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: |
+          ${{ env.REGISTRY }}/${{ github.repository }}:${{ steps.version.outputs.version }}
+          ${{ env.REGISTRY }}/${{ github.repository }}:latest
+        labels: |
+          org.opencontainers.image.title=Mitene Backup
+          org.opencontainers.image.description=Automated backup for Mitene family albums
+          org.opencontainers.image.version=${{ steps.version.outputs.version }}
+          org.opencontainers.image.revision=${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ env.REGISTRY }}/${{ github.repository }}:${{ steps.version.outputs.version }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  release:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        VERSION="${{ needs.build-and-push.outputs.version }}"
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        
+        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+        echo "## What's Changed in $VERSION" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        
+        if [ -n "$LAST_TAG" ]; then
+          git log $LAST_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges >> $GITHUB_OUTPUT
+        else
+          git log --pretty=format:"- %s (%h)" --no-merges -10 >> $GITHUB_OUTPUT
+        fi
+        
+        echo "" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "## Docker Images" >> $GITHUB_OUTPUT
+        echo "- \`ghcr.io/${{ github.repository }}:$VERSION\`" >> $GITHUB_OUTPUT
+        echo "- \`ghcr.io/${{ github.repository }}:latest\`" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$LAST_TAG...$VERSION" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ needs.build-and-push.outputs.version }}
+        name: Release ${{ needs.build-and-push.outputs.version }}
+        body: ${{ steps.changelog.outputs.CHANGELOG }}
+        generate_release_notes: false
+        make_latest: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

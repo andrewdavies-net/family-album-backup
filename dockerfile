@@ -1,18 +1,26 @@
 FROM python:3.11.10-alpine3.20
 
-WORKDIR /app
-
+# Install everything as root first
 RUN apk add --no-cache \
     git \
     curl \
-    ca-certificates
+    ca-certificates && \
+    rm -rf /var/cache/apk/*
 
-RUN pip install --no-cache-dir mitene_download
+RUN pip install --no-cache-dir mitene_download && \
+    pip cache purge
 
+WORKDIR /app
+
+# Create backup directory (nobody will need write access via fsGroup)
 RUN mkdir -p /backup
 
+# Copy entrypoint
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+# Switch to nobody:nogroup (65534:65534)
+USER nobody:nogroup
 
 ENV OUTPUT_DIR=/backup
 

@@ -4,7 +4,8 @@ FROM python:3.11.10-alpine3.20
 RUN apk add --no-cache \
     git \
     curl \
-    ca-certificates && \
+    ca-certificates \
+    findutils && \
     rm -rf /var/cache/apk/*
 
 RUN pip install --no-cache-dir mitene_download && \

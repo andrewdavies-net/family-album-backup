@@ -45,28 +45,24 @@
   },
   "packageRules": [
     {
-      "description": "Pin base image versions (Python, Alpine)",
+      "description": "Pin Python base image versions and require manual review for major updates",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["python"],
-      "rangeStrategy": "pin",
       "allowedVersions": ">=3.10",
-      "matchUpdateTypes": ["major"],
       "commitMessagePrefix": "feat!:",
       "addLabels": ["breaking-change"],
       "automerge": false
     },
     {
-      "description": "Auto-update GitHub Actions to latest",
+      "description": "Auto-merge GitHub Actions minor and patch updates",
       "matchDatasources": ["github-actions"],
-      "rangeStrategy": "bump",
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true,
       "addLabels": ["auto-merge"]
     },
     {
-      "description": "Auto-update Python packages to latest",
+      "description": "Auto-merge Python package minor and patch updates",
       "matchDatasources": ["pypi"],
-      "rangeStrategy": "bump",
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true,
       "addLabels": ["auto-merge"]
@@ -74,6 +70,14 @@
     {
       "description": "Manual review for major Python package updates",
       "matchDatasources": ["pypi"],
+      "matchUpdateTypes": ["major"],
+      "commitMessagePrefix": "feat!:",
+      "addLabels": ["breaking-change"],
+      "automerge": false
+    },
+    {
+      "description": "Manual review for major Docker base image updates",
+      "matchDatasources": ["docker"],
       "matchUpdateTypes": ["major"],
       "commitMessagePrefix": "feat!:",
       "addLabels": ["breaking-change"],

@@ -20,9 +20,28 @@ jobs:
     - name: Build test image
       run: docker build -t test-image .
 
-    - name: Test container runs
+    - name: Test container starts properly
       run: |
-        docker run --rm -e MITENE_URL="https://example.com" test-image echo "Container test passed"
+        # Test that container fails gracefully with missing URL
+        if docker run --rm test-image 2>&1 | grep -q "Error: MITENE_URL environment variable is required"; then
+          echo "✅ Container properly validates required environment variables"
+        else
+          echo "❌ Container validation test failed"
+          exit 1
+        fi
+
+    - name: Test container accepts valid environment variables
+      run: |
+        # Test that container starts with valid env vars (but we'll override the command to avoid actual download)
+        docker run --rm \
+          -e MITENE_URL="https://mitene.us/f/test123" \
+          -e MITENE_PASSWORD="testpass" \
+          test-image sh -c 'echo "Container started successfully with URL: $MITENE_URL"'
+
+    - name: Test container file structure
+      run: |
+        # Test that required files exist in container
+        docker run --rm test-image sh -c 'ls -la /entrypoint.sh && which mitene_download'
 
   build-and-push:
     needs: test

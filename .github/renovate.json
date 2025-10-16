@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base",
+    "config:recommended",
     "docker:enableMajor",
     ":enablePreCommit",
     ":semanticCommits"
@@ -10,9 +10,15 @@
   "schedule": [
     "before 6am on monday"
   ],
-  "labels": ["dependencies"],
-  "assignees": ["@me"],
-  "reviewers": ["@me"],
+  "labels": [
+    "dependencies"
+  ],
+  "assignees": [
+    "@me"
+  ],
+  "reviewers": [
+    "@me"
+  ],
   "commitMessagePrefix": "fix:",
   "commitMessageTopic": "{{depName}}",
   "commitMessageExtra": "to {{newVersion}}",
@@ -22,65 +28,100 @@
   "dockerfile": {
     "enabled": true
   },
-  "docker": {
-    "enabled": true,
-    "major": {
-      "enabled": true,
-      "commitMessagePrefix": "feat!:",
-      "prTitle": "feat!: update {{depName}} to {{newVersion}} (BREAKING)"
-    },
-    "minor": {
-      "enabled": true,
-      "commitMessagePrefix": "feat:",
-      "prTitle": "feat: update {{depName}} to {{newVersion}}"
-    },
-    "patch": {
-      "enabled": true,
-      "commitMessagePrefix": "fix:",
-      "prTitle": "fix: update {{depName}} to {{newVersion}}"
-    }
-  },
   "pip_requirements": {
     "enabled": true
   },
   "packageRules": [
     {
+      "matchCategories": [
+        "docker"
+      ],
+      "enabled": true,
+      "major": {
+        "enabled": true,
+        "commitMessagePrefix": "feat!:",
+        "prTitle": "feat!: update {{depName}} to {{newVersion}} (BREAKING)"
+      },
+      "minor": {
+        "enabled": true,
+        "commitMessagePrefix": "feat:",
+        "prTitle": "feat: update {{depName}} to {{newVersion}}"
+      },
+      "patch": {
+        "enabled": true,
+        "commitMessagePrefix": "fix:",
+        "prTitle": "fix: update {{depName}} to {{newVersion}}"
+      }
+    },
+    {
       "description": "Pin Python base image versions and require manual review for major updates",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["python"],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "python"
+      ],
       "allowedVersions": ">=3.10",
       "commitMessagePrefix": "feat!:",
-      "addLabels": ["breaking-change"],
+      "addLabels": [
+        "breaking-change"
+      ],
       "automerge": false
     },
     {
       "description": "Auto-merge GitHub Actions minor and patch updates",
-      "matchDatasources": ["github-actions"],
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchDatasources": [
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "automerge": true,
-      "addLabels": ["auto-merge"]
+      "addLabels": [
+        "auto-merge"
+      ]
     },
     {
       "description": "Auto-merge Python package minor and patch updates",
-      "matchDatasources": ["pypi"],
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchDatasources": [
+        "pypi"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "automerge": true,
-      "addLabels": ["auto-merge"]
+      "addLabels": [
+        "auto-merge"
+      ]
     },
     {
       "description": "Manual review for major Python package updates",
-      "matchDatasources": ["pypi"],
-      "matchUpdateTypes": ["major"],
+      "matchDatasources": [
+        "pypi"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "commitMessagePrefix": "feat!:",
-      "addLabels": ["breaking-change"],
+      "addLabels": [
+        "breaking-change"
+      ],
       "automerge": false
     },
     {
       "description": "Manual review for major Docker base image updates",
-      "matchDatasources": ["docker"],
-      "matchUpdateTypes": ["major"],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "commitMessagePrefix": "feat!:",
-      "addLabels": ["breaking-change"],
+      "addLabels": [
+        "breaking-change"
+      ],
       "automerge": false
     }
   ],

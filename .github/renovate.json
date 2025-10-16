@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended",
+    "config:base",
     "docker:enableMajor",
     ":enablePreCommit",
     ":semanticCommits"
@@ -10,15 +10,9 @@
   "schedule": [
     "before 6am on monday"
   ],
-  "labels": [
-    "dependencies"
-  ],
-  "assignees": [
-    "@me"
-  ],
-  "reviewers": [
-    "@me"
-  ],
+  "labels": ["dependencies"],
+  "assignees": ["@me"],
+  "reviewers": ["@me"],
   "commitMessagePrefix": "fix:",
   "commitMessageTopic": "{{depName}}",
   "commitMessageExtra": "to {{newVersion}}",
@@ -28,156 +22,94 @@
   "dockerfile": {
     "enabled": true
   },
+  "docker": {
+    "enabled": true,
+    "major": {
+      "enabled": true,
+      "commitMessagePrefix": "feat!:",
+      "prTitle": "feat!: update {{depName}} to {{newVersion}} (BREAKING)"
+    },
+    "minor": {
+      "enabled": true,
+      "commitMessagePrefix": "feat:",
+      "prTitle": "feat: update {{depName}} to {{newVersion}}"
+    },
+    "patch": {
+      "enabled": true,
+      "commitMessagePrefix": "fix:",
+      "prTitle": "fix: update {{depName}} to {{newVersion}}"
+    }
+  },
   "pip_requirements": {
-    "enabled": true
+    "enabled": true,
+    "fileMatch": ["(^|/)requirements.*\\.txt$", "(^|/)Dockerfile$"]
   },
   "packageRules": [
     {
-      "matchCategories": [
-        "docker"
-      ],
-      "enabled": true,
-      "major": {
-        "enabled": true,
-        "commitMessagePrefix": "feat!:",
-        "prTitle": "feat!: update {{depName}} to {{newVersion}} (BREAKING)"
-      },
-      "minor": {
-        "enabled": true,
-        "commitMessagePrefix": "feat:",
-        "prTitle": "feat: update {{depName}} to {{newVersion}}"
-      },
-      "patch": {
-        "enabled": true,
-        "commitMessagePrefix": "fix:",
-        "prTitle": "fix: update {{depName}} to {{newVersion}}"
-      }
-    },
-    {
       "description": "Auto-merge Python base image patch updates",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "python"
-      ],
-      "matchUpdateTypes": [
-        "patch"
-      ],
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["python"],
+      "matchUpdateTypes": ["patch"],
       "automerge": true,
-      "addLabels": [
-        "auto-merge",
-        "base-image"
-      ]
+      "addLabels": ["auto-merge", "base-image"]
     },
     {
       "description": "Auto-merge Python base image minor updates",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "python"
-      ],
-      "matchUpdateTypes": [
-        "minor"
-      ],
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["python"],
+      "matchUpdateTypes": ["minor"],
       "commitMessagePrefix": "feat:",
       "automerge": true,
-      "addLabels": [
-        "auto-merge",
-        "base-image"
-      ]
+      "addLabels": ["auto-merge", "base-image"]
     },
     {
       "description": "Manual review for Python base image major updates",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "python"
-      ],
-      "matchUpdateTypes": [
-        "major"
-      ],
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["python"],
+      "matchUpdateTypes": ["major"],
       "commitMessagePrefix": "feat!:",
       "automerge": false,
-      "addLabels": [
-        "major-update",
-        "base-image",
-        "needs-review"
-      ]
+      "addLabels": ["major-update", "base-image", "needs-review"]
     },
     {
       "description": "Auto-merge GitHub Actions minor and patch updates",
-      "matchDatasources": [
-        "github-actions"
-      ],
-      "matchUpdateTypes": [
-        "minor",
-        "patch"
-      ],
+      "matchDatasources": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch"],
       "automerge": true,
-      "addLabels": [
-        "auto-merge"
-      ]
+      "addLabels": ["auto-merge"]
     },
     {
       "description": "Manual review for GitHub Actions major updates",
-      "matchDatasources": [
-        "github-actions"
-      ],
-      "matchUpdateTypes": [
-        "major"
-      ],
+      "matchDatasources": ["github-actions"],
+      "matchUpdateTypes": ["major"],
       "commitMessagePrefix": "feat!:",
       "automerge": false,
-      "addLabels": [
-        "major-update",
-        "needs-review"
-      ]
+      "addLabels": ["major-update", "needs-review"]
     },
     {
       "description": "Auto-merge Python package minor and patch updates",
-      "matchDatasources": [
-        "pypi"
-      ],
-      "matchUpdateTypes": [
-        "minor",
-        "patch"
-      ],
+      "matchDatasources": ["pypi"],
+      "matchUpdateTypes": ["minor", "patch"],
       "automerge": true,
-      "addLabels": [
-        "auto-merge"
-      ]
+      "addLabels": ["auto-merge"],
+      "commitMessagePrefix": "fix:"
     },
     {
       "description": "Manual review for Python package major updates",
-      "matchDatasources": [
-        "pypi"
-      ],
-      "matchUpdateTypes": [
-        "major"
-      ],
+      "matchDatasources": ["pypi"],
+      "matchUpdateTypes": ["major"],
       "commitMessagePrefix": "feat!:",
       "automerge": false,
-      "addLabels": [
-        "major-update",
-        "needs-review"
-      ]
+      "addLabels": ["major-update", "needs-review"]
     },
     {
-      "description": "Auto-merge Alpine package updates in base image",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "alpine"
-      ],
+      "description": "Track mitene_download specifically",
+      "matchDatasources": ["pypi"],
+      "matchPackageNames": ["mitene_download"],
+      "matchUpdateTypes": ["patch", "minor"],
       "automerge": true,
-      "addLabels": [
-        "auto-merge",
-        "base-image"
-      ]
+      "addLabels": ["auto-merge", "mitene-update"],
+      "commitMessagePrefix": "feat:"
     }
   ],
   "prConcurrentLimit": 10,

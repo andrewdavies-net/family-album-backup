@@ -8,10 +8,14 @@ RUN apk add --no-cache \
     findutils && \
     rm -rf /var/cache/apk/*
 
-RUN pip install --no-cache-dir mitene_download && \
-    pip cache purge
-
 WORKDIR /app
+
+# Copy requirements first (better Docker layer caching)
+COPY requirements.txt .
+
+# Install Python dependencies with pinned versions
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip cache purge
 
 # Create backup directory (nobody will need write access via fsGroup)
 RUN mkdir -p /backup

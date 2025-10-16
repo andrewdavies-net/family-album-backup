@@ -1,4 +1,4 @@
-FROM python:3.11.10-alpine3.20
+FROM python:3.13.3-alpine3.20
 
 # Install everything as root first
 RUN apk add --no-cache \

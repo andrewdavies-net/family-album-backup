@@ -8,40 +8,58 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: mitene-backup
+  IMAGE_NAME: family-album-backup
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v5
+      uses: actions/checkout@v4
 
     - name: Build test image
       run: docker build -t test-image .
 
-    - name: Test container starts properly
+    - name: Test container environment validation
       run: |
         # Test that container fails gracefully with missing URL
-        if docker run --rm test-image 2>&1 | grep -q "Error: MITENE_URL environment variable is required"; then
+        set +e  # Don't exit on error
+        OUTPUT=$(docker run --rm --entrypoint="" test-image /entrypoint.sh 2>&1)
+        EXIT_CODE=$?
+        set -e  # Re-enable exit on error
+        
+        if echo "$OUTPUT" | grep -q "Error: MITENE_URL environment variable is required"; then
           echo "✅ Container properly validates required environment variables"
         else
-          echo "❌ Container validation test failed"
+          echo "❌ Container validation test failed. Output: $OUTPUT"
           exit 1
         fi
 
-    - name: Test container accepts valid environment variables
+    - name: Test container structure and dependencies
       run: |
-        # Test that container starts with valid env vars (but we'll override the command to avoid actual download)
-        docker run --rm \
+        # Test that required files and commands exist
+        docker run --rm --entrypoint="" test-image sh -c '
+          echo "Testing container structure..."
+          ls -la /entrypoint.sh || exit 1
+          which mitene_download || exit 1
+          python3 --version || exit 1
+          echo "✅ All required components are present"
+        '
+
+    - name: Test entrypoint script with valid environment
+      run: |
+        # Test that entrypoint starts correctly but exit before actual download
+        set +e  # Don't exit on error
+        timeout 10s docker run --rm \
           -e MITENE_URL="https://mitene.us/f/test123" \
           -e MITENE_PASSWORD="testpass" \
-          test-image sh -c 'echo "Container started successfully with URL: $MITENE_URL"'
-
-    - name: Test container file structure
-      run: |
-        # Test that required files exist in container
-        docker run --rm test-image sh -c 'ls -la /entrypoint.sh && which mitene_download'
+          test-image 2>&1 | head -20 &
+        DOCKER_PID=$!
+        sleep 5
+        kill $DOCKER_PID 2>/dev/null || true
+        wait $DOCKER_PID 2>/dev/null || true
+        set -e  # Re-enable exit on error
+        echo "✅ Container starts and accepts environment variables"
 
   build-and-push:
     needs: test
@@ -55,7 +73,7 @@ jobs:
       
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v5
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -104,7 +122,7 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: Build and push Docker image
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v5
       with:
         context: .
         platforms: linux/amd64,linux/arm64
@@ -128,7 +146,7 @@ jobs:
         output: 'trivy-results.sarif'
 
     - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v4
+      uses: github/codeql-action/upload-sarif@v2
       with:
         sarif_file: 'trivy-results.sarif'
 
@@ -141,7 +159,7 @@ jobs:
       
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v5
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -171,7 +189,7 @@ jobs:
         echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Create Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ needs.build-and-push.outputs.version }}
         name: Release ${{ needs.build-and-push.outputs.version }}

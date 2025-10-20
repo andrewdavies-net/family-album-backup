@@ -22,7 +22,6 @@
   "commitMessagePrefix": "fix:",
   "commitMessageTopic": "{{depName}}",
   "commitMessageExtra": "to {{newVersion}}",
-  "prTitle": "fix: update {{depName}} to {{newVersion}}",
   "separateMajorMinor": true,
   "separateMinorPatch": false,
   "dockerfile": {
@@ -44,17 +43,15 @@
       "major": {
         "enabled": true,
         "commitMessagePrefix": "feat!:",
-        "prTitle": "feat!: update {{depName}} to {{newVersion}} (BREAKING)"
+        "commitMessageSuffix": " (BREAKING)"
       },
       "minor": {
         "enabled": true,
-        "commitMessagePrefix": "feat:",
-        "prTitle": "feat: update {{depName}} to {{newVersion}}"
+        "commitMessagePrefix": "feat:"
       },
       "patch": {
         "enabled": true,
-        "commitMessagePrefix": "fix:",
-        "prTitle": "fix: update {{depName}} to {{newVersion}}"
+        "commitMessagePrefix": "fix:"
       }
     },
     {

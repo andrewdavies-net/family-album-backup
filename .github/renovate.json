@@ -24,6 +24,9 @@
   "commitMessageExtra": "to {{newVersion}}",
   "separateMajorMinor": true,
   "separateMinorPatch": false,
+  "docker": {
+    "pinDigests": true
+  },
   "dockerfile": {
     "enabled": true
   },

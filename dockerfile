@@ -1,4 +1,4 @@
-FROM python:3.13.3-alpine3.20
+FROM python:3.14.0-alpine@sha256:8373231e1e906ddfb457748bfc032c4c06ada8c759b7b62d9c73ec2a3c56e710
 
 # Install everything as root first
 RUN apk add --no-cache \

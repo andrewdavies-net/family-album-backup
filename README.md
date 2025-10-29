@@ -41,7 +41,6 @@ Related Projects:
     kind: CronJob
     metadata:
       name: family-backup-cronjob
-      namespace: cron-jobs
     spec:
       schedule: "0 16 * * 3"  # Wednesday at 4 PM
       timeZone: "Europe/London"

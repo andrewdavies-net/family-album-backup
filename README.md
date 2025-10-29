@@ -176,4 +176,10 @@ The container provides detailed file summaries:
       -e MITENE_URL="https://mitene.us/f/your-family-id" \
       -e MITENE_PASSWORD="your-password" \
       ghcr.io/andrewdavies-net/family-album-backup:latest
+
+## Repo
+Use breaking in commmit message for Major change
+Use feat in commmit message for Minor change
+Any change including docs should implement a minor - todo only file changes not docs 
+      
     

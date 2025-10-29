@@ -11,6 +11,9 @@ Related Projects:
 - mitene_download - The underlying Python script (https://github.com/perrinjerome/mitene_download) all credit
 - fammich - Advanced version with Immich integration (https://github.com/ChrisTracy/fammich)
 
+## Use case
+
+I use this as a cronjob on k8s to every week download a backup of familyalbum into a pvc. It sends a discord webhook to let me know how many additional files it has downloaded.
 
 ## Features
 

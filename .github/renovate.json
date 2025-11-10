@@ -58,11 +58,16 @@
       }
     },
     {
+      "description": "Use PEP440 versioning for Python Docker images",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["python"],
+      "versioning": "pep440"
+    },
+    {
       "description": "Auto-merge Python base image patch updates only",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["python"],
       "matchUpdateTypes": ["patch"],
-      "versioning": "pep440",
       "automerge": true,
       "addLabels": ["auto-merge", "base-image"],
       "commitMessagePrefix": "fix:"
@@ -72,7 +77,6 @@
       "matchDatasources": ["docker"],
       "matchPackageNames": ["python"],
       "matchUpdateTypes": ["minor", "major"],
-      "versioning": "pep440",
       "automerge": false,
       "addLabels": ["needs-review", "base-image"]
     },

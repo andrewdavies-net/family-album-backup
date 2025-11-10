@@ -58,58 +58,23 @@
       }
     },
     {
-      "description": "Auto-merge Python base image patch updates",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "python"
-      ],
-      "matchUpdateTypes": [
-        "patch"
-      ],
+      "description": "Auto-merge Python base image patch updates only",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["python"],
+      "matchUpdateTypes": ["patch"],
+      "versioning": "pep440",
       "automerge": true,
-      "addLabels": [
-        "auto-merge",
-        "base-image"
-      ]
+      "addLabels": ["auto-merge", "base-image"],
+      "commitMessagePrefix": "fix:"
     },
     {
-      "description": "Auto-merge Python base image minor updates",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "python"
-      ],
-      "matchUpdateTypes": [
-        "minor"
-      ],
-      "commitMessagePrefix": "feat:",
-      "automerge": true,
-      "addLabels": [
-        "auto-merge",
-        "base-image"
-      ]
-    },
-    {
-      "description": "Manual review for Python base image major updates",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "python"
-      ],
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "commitMessagePrefix": "feat!:",
+      "description": "Manual review for Python base image minor and major updates",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["python"],
+      "matchUpdateTypes": ["minor", "major"],
+      "versioning": "pep440",
       "automerge": false,
-      "addLabels": [
-        "major-update",
-        "base-image",
-        "needs-review"
-      ]
+      "addLabels": ["needs-review", "base-image"]
     },
     {
       "description": "Auto-merge GitHub Actions minor and patch updates",

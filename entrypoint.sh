@@ -33,7 +33,6 @@ count_files() {
     echo "📁 Total:    $TOTAL"
     echo "=================="
     
-    # Store counts for Discord webhook
     export FILE_IMAGES=$IMAGES
     export FILE_VIDEOS=$VIDEOS
     export FILE_COMMENTS=$COMMENTS
@@ -50,7 +49,6 @@ send_discord_notification() {
     if [ "$ENABLE_DISCORD" = "true" ] && [ -n "$DISCORD_WEBHOOK" ]; then
         local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
         
-        # Create JSON payload
         local payload=$(cat <<EOF
 {
   "embeds": [
@@ -103,8 +101,8 @@ EOF
     fi
 }
 
-# Build command
-CMD="mitene_download $URL"
+# Build command - use python to run the local script
+CMD="python /app/mitene_download.py $URL"
 
 if [ -n "$PASSWORD" ]; then
     CMD="$CMD --password $PASSWORD"

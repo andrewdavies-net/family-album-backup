@@ -34,17 +34,18 @@ jobs:
           echo "❌ Container validation test failed. Output: $OUTPUT"
           exit 1
         fi
-
+        
     - name: Test container structure and dependencies
       run: |
         # Test that required files and commands exist
         docker run --rm --entrypoint="" test-image sh -c '
           echo "Testing container structure..."
           ls -la /entrypoint.sh || exit 1
-          which mitene_download || exit 1
+          ls -la /app/mitene_download.py || exit 1
           python3 --version || exit 1
+          python3 -c "import aiohttp; print(\"aiohttp installed\")" || exit 1
           echo "✅ All required components are present"
-        '
+    
 
     - name: Test entrypoint script with valid environment
       run: |

@@ -172,10 +172,8 @@ async def async_main() -> None:
     await gather_with_concurrency(4, *download_coroutines)
   await session.close()
 
-
 def main() -> None:
-  loop = asyncio.get_event_loop()
-  loop.run_until_complete(async_main())
+  asyncio.run(async_main())
 
 
 if __name__ == "__main__":

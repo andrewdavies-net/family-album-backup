@@ -155,7 +155,6 @@ async def async_main() -> None:
           )
         )
 
-
         if not args.nocomments and media["comments"]:
           comment_text = "".join(
             f"**{comment['user']['nickname']}**: {comment['body']}\n\n"
@@ -168,6 +167,15 @@ async def async_main() -> None:
             and comment_file.read_text(encoding="utf-8") == comment_text
           ):
             comment_file.write_text(comment_text, encoding="utf-8")
+          
+          # Set timestamp on comment file to match the photo's tookAt time
+          if media.get("tookAt"):
+            try:
+              dt = datetime.datetime.fromisoformat(media["tookAt"])
+              timestamp = dt.timestamp()
+              os.utime(str(comment_file), (timestamp, timestamp))
+            except (ValueError, OSError):
+              pass  # Silently ignore timestamp errors for comment files
 
     await gather_with_concurrency(4, *download_coroutines)
   await session.close()
@@ -175,6 +183,6 @@ async def async_main() -> None:
 def main() -> None:
   asyncio.run(async_main())
 
-
 if __name__ == "__main__":
   main()
+

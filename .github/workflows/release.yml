@@ -229,49 +229,52 @@ jobs:
       run: |
         VERSION="${{ needs.build-and-push.outputs.version }}"
         IS_BETA="${{ needs.build-and-push.outputs.is_beta }}"
-
+        
         if [[ "$IS_BETA" == "true" ]]; then
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
         else
           LAST_TAG=$(git describe --tags --abbrev=0 --match='v[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || echo "")
         fi
+        
+        {
+          echo "CHANGELOG<<EOF"
+          
+          if [[ "$IS_BETA" == "true" ]]; then
+            echo "## 🧪 Beta Release $VERSION"
+            echo ""
+            echo "⚠️ **This is a pre-release version for testing purposes**"
+            echo ""
+          else
+            echo "## What's Changed in $VERSION"
+            echo ""
+          fi
+          
+          if [ -n "$LAST_TAG" ]; then
+            git log $LAST_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges
+          else
+            git log --pretty=format:"- %s (%h)" --no-merges -10
+          fi
+          
+          echo ""
+          echo ""
+          echo "## Docker Images"
+          echo '- `ghcr.io/${{ github.repository }}:'"$VERSION"'`'
+          
+          if [[ "$IS_BETA" == "true" ]]; then
+            echo '- `ghcr.io/${{ github.repository }}:beta`'
+          else
+            echo '- `ghcr.io/${{ github.repository }}:latest`'
+          fi
+          
+          echo ""
+          
+          if [ -n "$LAST_TAG" ]; then
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$LAST_TAG...$VERSION"
+          fi
+          
+          echo "EOF"
+        } >> $GITHUB_OUTPUT
 
-        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
-
-        if [[ "$IS_BETA" == "true" ]]; then
-          echo "## 🧪 Beta Release $VERSION" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "⚠️ **This is a pre-release version for testing purposes**" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-        else
-          echo "## What's Changed in $VERSION" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-        fi
-
-        if [ -n "$LAST_TAG" ]; then
-          git log $LAST_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges >> $GITHUB_OUTPUT
-        else
-          git log --pretty=format:"- %s (%h)" --no-merges -10 >> $GITHUB_OUTPUT
-        fi
-
-        echo "" >> $GITHUB_OUTPUT
-        echo "" >> $GITHUB_OUTPUT
-        echo "## Docker Images" >> $GITHUB_OUTPUT
-        echo "- \\`ghcr.io/${{ github.repository }}:$VERSION\\`" >> $GITHUB_OUTPUT
-
-        if [[ "$IS_BETA" == "true" ]]; then
-          echo "- \\`ghcr.io/${{ github.repository }}:beta\\`" >> $GITHUB_OUTPUT
-        else
-          echo "- \\`ghcr.io/${{ github.repository }}:latest\\`" >> $GITHUB_OUTPUT
-        fi
-
-        echo "" >> $GITHUB_OUTPUT
-
-        if [ -n "$LAST_TAG" ]; then
-          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$LAST_TAG...$VERSION" >> $GITHUB_OUTPUT
-        fi
-
-        echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Create Release
       uses: softprops/action-gh-release@v2

@@ -27,7 +27,7 @@ jobs:
         OUTPUT=$(docker run --rm --entrypoint="" test-image /entrypoint.sh 2>&1)
         EXIT_CODE=$?
         set -e  # Re-enable exit on error
-
+        
         if echo "$OUTPUT" | grep -q "Error: MITENE_URL environment variable is required"; then
           echo "✅ Container properly validates required environment variables"
         else
@@ -41,8 +41,9 @@ jobs:
         docker run --rm --entrypoint="" test-image sh -c '
           echo "Testing container structure..."
           ls -la /entrypoint.sh || exit 1
-          which mitene_download || exit 1
+          ls -la /app/mitene_download.py || exit 1
           python3 --version || exit 1
+          python3 -c "import aiohttp; print(\"aiohttp installed\")" || exit 1
           echo "✅ All required components are present"
         '
 
@@ -82,7 +83,7 @@ jobs:
       id: version
       run: |
         IS_BETA="false"
-
+        
         if [[ "${{ github.event_name }}" == "pull_request" ]]; then
           echo "version=pr-${{ github.event.number }}" >> $GITHUB_OUTPUT
           echo "is_beta=true" >> $GITHUB_OUTPUT
@@ -95,12 +96,13 @@ jobs:
           MAJOR=${VERSION_PARTS[0]}
           MINOR=${VERSION_PARTS[1]}
           PATCH=${VERSION_PARTS[2]}
-
+          
           # Get commit count since last tag for beta number
           COMMIT_COUNT=$(git rev-list $LAST_TAG..HEAD --count 2>/dev/null || echo "1")
           SHORT_SHA=$(git rev-parse --short HEAD)
-
-          NEW_VERSION="v${MAJOR}.${MINOR}.$((PATCH + 1))-beta.${COMMIT_COUNT}+${SHORT_SHA}"
+          
+          # Use - instead of + for Docker compatibility
+          NEW_VERSION="v${MAJOR}.${MINOR}.$((PATCH + 1))-beta.${COMMIT_COUNT}-${SHORT_SHA}"
           echo "Beta version: $NEW_VERSION"
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "is_beta=true" >> $GITHUB_OUTPUT
@@ -108,13 +110,13 @@ jobs:
           # Main branch - stable release
           LAST_TAG=$(git tag --list 'v*' --sort=-version:refname | grep -v 'beta' | head -n1 || echo "v0.0.0")
           echo "Last tag: $LAST_TAG"
-
+          
           VERSION=$(echo $LAST_TAG | sed 's/v//')
           IFS='.' read -r -a VERSION_PARTS <<< "$VERSION"
           MAJOR=${VERSION_PARTS[0]}
           MINOR=${VERSION_PARTS[1]}
           PATCH=${VERSION_PARTS[2]}
-
+          
           # Determine version bump based on commit messages since last tag
           if git log $LAST_TAG..HEAD --oneline | grep -E "(feat!|BREAKING|breaking)"; then
             MAJOR=$((MAJOR + 1))
@@ -126,12 +128,13 @@ jobs:
           else
             PATCH=$((PATCH + 1))
           fi
-
+          
           NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
           echo "New version: $NEW_VERSION"
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "is_beta=false" >> $GITHUB_OUTPUT
         fi
+
 
     - name: Log in to Container Registry
       uses: docker/login-action@v3
@@ -226,49 +229,52 @@ jobs:
       run: |
         VERSION="${{ needs.build-and-push.outputs.version }}"
         IS_BETA="${{ needs.build-and-push.outputs.is_beta }}"
-
+        
         if [[ "$IS_BETA" == "true" ]]; then
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
         else
           LAST_TAG=$(git describe --tags --abbrev=0 --match='v[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || echo "")
         fi
+        
+        {
+          echo "CHANGELOG<<EOF"
+          
+          if [[ "$IS_BETA" == "true" ]]; then
+            echo "## 🧪 Beta Release $VERSION"
+            echo ""
+            echo "⚠️ **This is a pre-release version for testing purposes**"
+            echo ""
+          else
+            echo "## What's Changed in $VERSION"
+            echo ""
+          fi
+          
+          if [ -n "$LAST_TAG" ]; then
+            git log $LAST_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges
+          else
+            git log --pretty=format:"- %s (%h)" --no-merges -10
+          fi
+          
+          echo ""
+          echo ""
+          echo "## Docker Images"
+          echo '- `ghcr.io/${{ github.repository }}:'"$VERSION"'`'
+          
+          if [[ "$IS_BETA" == "true" ]]; then
+            echo '- `ghcr.io/${{ github.repository }}:beta`'
+          else
+            echo '- `ghcr.io/${{ github.repository }}:latest`'
+          fi
+          
+          echo ""
+          
+          if [ -n "$LAST_TAG" ]; then
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$LAST_TAG...$VERSION"
+          fi
+          
+          echo "EOF"
+        } >> $GITHUB_OUTPUT
 
-        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
-
-        if [[ "$IS_BETA" == "true" ]]; then
-          echo "## 🧪 Beta Release $VERSION" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "⚠️ **This is a pre-release version for testing purposes**" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-        else
-          echo "## What's Changed in $VERSION" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-        fi
-
-        if [ -n "$LAST_TAG" ]; then
-          git log $LAST_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges >> $GITHUB_OUTPUT
-        else
-          git log --pretty=format:"- %s (%h)" --no-merges -10 >> $GITHUB_OUTPUT
-        fi
-
-        echo "" >> $GITHUB_OUTPUT
-        echo "" >> $GITHUB_OUTPUT
-        echo "## Docker Images" >> $GITHUB_OUTPUT
-        echo "- \\`ghcr.io/${{ github.repository }}:$VERSION\\`" >> $GITHUB_OUTPUT
-
-        if [[ "$IS_BETA" == "true" ]]; then
-          echo "- \\`ghcr.io/${{ github.repository }}:beta\\`" >> $GITHUB_OUTPUT
-        else
-          echo "- \\`ghcr.io/${{ github.repository }}:latest\\`" >> $GITHUB_OUTPUT
-        fi
-
-        echo "" >> $GITHUB_OUTPUT
-
-        if [ -n "$LAST_TAG" ]; then
-          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$LAST_TAG...$VERSION" >> $GITHUB_OUTPUT
-        fi
-
-        echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Create Release
       uses: softprops/action-gh-release@v2

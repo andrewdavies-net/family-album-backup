@@ -27,14 +27,14 @@ jobs:
         OUTPUT=$(docker run --rm --entrypoint="" test-image /entrypoint.sh 2>&1)
         EXIT_CODE=$?
         set -e  # Re-enable exit on error
-
+        
         if echo "$OUTPUT" | grep -q "Error: MITENE_URL environment variable is required"; then
           echo "✅ Container properly validates required environment variables"
         else
           echo "❌ Container validation test failed. Output: $OUTPUT"
           exit 1
         fi
-        
+
     - name: Test container structure and dependencies
       run: |
         # Test that required files and commands exist
@@ -45,7 +45,7 @@ jobs:
           python3 --version || exit 1
           python3 -c "import aiohttp; print(\"aiohttp installed\")" || exit 1
           echo "✅ All required components are present"
-    
+        '
 
     - name: Test entrypoint script with valid environment
       run: |

@@ -29,13 +29,14 @@
     "pinDigests": true
   },
   "dockerfile": {
-    "enabled": true
+    "enabled": true,
+    "fileMatch": ["(^|/)[Dd]ockerfile$", "(^|/)Dockerfile\\.[^/]*$"]
   },
   "pip_requirements": {
     "enabled": true,
-    "managerFilePatterns": [
-      "/(^|/)requirements.*\\.txt$/",
-      "/(^|/)Dockerfile$/"
+    "fileMatch": [
+      "(^|/)requirements.*\\.txt$",
+      "(^|/)[Dd]ockerfile$"
     ]
   },
   "packageRules": [

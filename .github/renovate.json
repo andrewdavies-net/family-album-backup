@@ -61,10 +61,10 @@
       }
     },
     {
-      "description": "Use PEP440 versioning for Python Docker images",
+      "description": "Use Docker versioning for Python Docker images",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["python"],
-      "versioning": "pep440"
+      "versioning": "docker"
     },
     {
       "description": "Auto-merge Python base image patch updates only",

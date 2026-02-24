@@ -61,27 +61,26 @@
       }
     },
     {
-      "description": "Use Docker versioning for Python Docker images",
+      "description": "Python Docker images configuration",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["python"],
-      "versioning": "docker"
-    },
-    {
-      "description": "Auto-merge Python base image patch updates only",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["python"],
-      "matchUpdateTypes": ["patch"],
-      "automerge": true,
-      "addLabels": ["auto-merge", "base-image"],
-      "commitMessagePrefix": "fix:"
-    },
-    {
-      "description": "Manual review for Python base image minor and major updates",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["python"],
-      "matchUpdateTypes": ["minor", "major"],
-      "automerge": false,
-      "addLabels": ["needs-review", "base-image"]
+      "versioning": "docker",
+      "separateMinorPatch": true,
+      "patch": {
+        "automerge": true,
+        "addLabels": ["auto-merge", "base-image"],
+        "commitMessagePrefix": "fix:"
+      },
+      "minor": {
+        "automerge": false,
+        "addLabels": ["needs-review", "base-image"],
+        "commitMessagePrefix": "feat:"
+      },
+      "major": {
+        "automerge": false,
+        "addLabels": ["needs-review", "base-image"],
+        "commitMessagePrefix": "feat!:"
+      }
     },
     {
       "description": "Auto-merge GitHub Actions minor and patch updates",

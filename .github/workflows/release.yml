@@ -148,7 +148,7 @@ jobs:
 
     - name: Build and push Docker image (Main)
       if: github.ref == 'refs/heads/main'
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         context: .
         platforms: linux/amd64,linux/arm64
@@ -166,7 +166,7 @@ jobs:
 
     - name: Build and push Docker image (Beta)
       if: github.ref == 'refs/heads/beta'
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         context: .
         platforms: linux/amd64,linux/arm64
@@ -184,7 +184,7 @@ jobs:
 
     - name: Build and push Docker image (PR)
       if: github.event_name == 'pull_request'
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         context: .
         platforms: linux/amd64,linux/arm64

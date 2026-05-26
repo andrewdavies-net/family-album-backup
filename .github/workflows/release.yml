@@ -277,7 +277,7 @@ jobs:
 
 
     - name: Create Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
         tag_name: ${{ needs.build-and-push.outputs.version }}
         name: Release ${{ needs.build-and-push.outputs.version }}
